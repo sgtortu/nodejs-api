@@ -5,7 +5,7 @@ const mysqlConnection  = require('../database.js');
  
 // GET todos Usuarios
 router.get('/usuarios', (req, res) => {
-    mysqlConnection.query('SELECT * FROM usuario', (err, rows, fields) => {
+    mysqlConnection.query('SELECT * FROM usuarioactivo', (err, rows, fields) => {
       if(!err) {
         res.json(rows);
       } else {
@@ -15,14 +15,14 @@ router.get('/usuarios', (req, res) => {
   });
 
 // GET un Usuario
-router.get('/usuarios/:id', (req, res) => {
-    const { id } = req.params; 
-    mysqlConnection.query('SELECT * FROM usuario WHERE id_usu = ?', [id], (err, rows, fields) => {
+router.get('/usuarios/:dni', (req, res) => {
+    const { dni } = req.params;
+    mysqlConnection.query(`SELECT * FROM usuarioactivo WHERE documentoPersona = ${dni}`, (err, rows, fields) => {
       if (!err) {
-        res.json(rows[0]);
+         res.json(rows[0]); 
       } else {
         console.log(err);
-      }
+      } 
     });
   });
   
