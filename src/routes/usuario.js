@@ -37,9 +37,7 @@ router.delete('/usuario/:id', (req, res) => {
       }
     });
   });
-  
-
-
+   
 
 
 

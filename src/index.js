@@ -9,6 +9,7 @@ app.use(express.json());
 
 // Routes
 app.use(require('./routes/usuario'));
+app.use(require('./routes/afiliado'));
 
 // Starting the server
 app.listen(app.get('port'), () => {
