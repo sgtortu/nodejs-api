@@ -14,7 +14,7 @@ router.get('/usuarios', (req, res) => {
     });  
   });
 
-// GET un Usuario
+// GET un Usuario via dni
 router.get('/usuarios/:dni', (req, res) => {
     const { dni } = req.params;
     mysqlConnection.query(`SELECT * FROM usuarioactivo WHERE documentoPersona = ${dni}`, (err, rows, fields) => {
@@ -25,6 +25,19 @@ router.get('/usuarios/:dni', (req, res) => {
       } 
     });
   });
+
+// GET un Usuario via ID
+router.get('/usuarioactivo/:id', (req, res) => {
+  const { id } = req.params;
+  mysqlConnection.query(`SELECT * FROM usuarioactivo WHERE id_usu = ${id}`, (err, rows, fields) => {
+    if (!err) {
+       res.json(rows[0]); 
+    } else {
+      console.log(err);
+    } 
+  });
+});
+
 
 
 // GET un ult user
@@ -109,5 +122,25 @@ router.get('/persona/:dni', (req, res) => {
   });
 });
 
+// GET afiliado 
+router.get('/afiliado/:username', (req, res) => {
+  const { username } = req.params;
+  mysqlConnection.query( `
+    SELECT afiliado.numAfiliado, afiliado.fingresoAfiliado, persona.nombrePersona, persona.documentoPersona, emp.rs_emp, usuario.nom_usu
+    FROM SindicatoCarneDB.afiliado
+    INNER JOIN SindicatoCarneDB.persona
+      ON afiliado.idPersona = persona.idPersona 
+    INNER JOIN SindicatoCarneDB.usuario 
+      ON afiliado.id_usu = usuario.id_usu AND usuario.nom_usu = '${username}'
+    INNER JOIN SindicatoCarneDB.emp
+      ON afiliado.id_emp = emp.id_emp;
+        `, (err, rows, fields) => {
+    if (!err) {
+       res.json(rows[0]); 
+    } else {
+      console.log(err);
+    } 
+  });
+});
 
 module.exports = router; 
