@@ -106,13 +106,33 @@ router.get('/persona/:dni', (req, res) => {
  // UPDATE afiliado - id: persona
  router.put('/afiliado/:idPersona', (req, res) => { 
   const { idPersona } = req.params;
-  console.log('req.body---> ', req.body);
+  console.log('req.body(afiliado)---> ', req.body);
   mysqlConnection.query(
     `
     SET foreign_key_checks = 0;
     UPDATE afiliado
     SET afiliado.id_usu = '${req.body.idusu}' 
     WHERE afiliado.idPersona = '${idPersona}'       
+    `, (err, rows, fields) => {
+    if (!err) {
+       res.json(rows[0]); 
+    } else {
+      console.log(err);
+    } 
+  });
+});
+
+
+ // UPDATE afiliadoflia - id: persona
+ router.put('/afiliadoflia/:idPersona', (req, res) => { 
+  const { idPersona } = req.params;
+  console.log('req.body(afiliadoflia)---> ', req.body);
+  mysqlConnection.query(
+    `
+    SET foreign_key_checks = 0;
+    UPDATE afiliadoflia
+    SET afiliado.idPersona = '${idPersona}' 
+    WHERE afiliado.parentescoAfiliadoflia = '${req.body.parentesco}'       
     `, (err, rows, fields) => {
     if (!err) {
        res.json(rows[0]); 
