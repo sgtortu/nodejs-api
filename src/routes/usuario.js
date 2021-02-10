@@ -1,7 +1,10 @@
+const { response } = require('express');
 const express = require('express');
 const router = express.Router();
 
 const mysqlConnection  = require('../database.js');
+ 
+ 
  
 // GET todos Usuarios 
 router.get('/usuario', (req, res) => {
@@ -118,7 +121,22 @@ router.get('/empresa/:id', (req, res) => {
   });
 });
 
-
+// GET afiliadoflia
+router.get('/afiliadoflia/:idpersona', (req, res) => {
+  const { idpersona } = req.params;
+  mysqlConnection.query(`
+    SELECT afiliadoflia.idPersonaA, afiliadoflia.parentescoAfiliadoflia
+    FROM afiliadoflia 
+    WHERE idPersona = '${idpersona}'
+    `, (err, rows, fields) => {
+    if (!err) {
+       res.json(rows[0]); 
+    } else {
+      res.status(404).json({ err });
+      console.log(err);
+    } 
+  });
+});
 
 /**
  * 
@@ -144,10 +162,23 @@ router.get('/lastusuario/:username', (req, res) => {
   });
 });
 
-// GET un Usuario via ID
+// GET un Usuario via ID_usu
 router.get('/usuarioactivo/:id', (req, res) => {
   const { id } = req.params;
   mysqlConnection.query(`SELECT * FROM usuarioactivo WHERE id_usu = ${id}`, (err, rows, fields) => {
+    if (!err) {
+       res.json(rows[0]); 
+    } else {
+      res.status(404).json({ err });
+      console.log(err);
+    } 
+  });
+});
+
+// GET un Usuario via ID_persona
+router.get('/usuarioactivoflia/:id', (req, res) => {
+  const { id } = req.params;
+  mysqlConnection.query(`SELECT * FROM usuarioactivo WHERE idPersona = ${id}`, (err, rows, fields) => {
     if (!err) {
        res.json(rows[0]); 
     } else {
