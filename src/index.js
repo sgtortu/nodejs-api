@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
-const conn  = require('./database');
+const conn  = require('./database'); 
+const bcrypt = require('bcryptjs'); 
 
 // Settings
 app.set('port', process.env.PORT || 3000);
@@ -82,9 +83,11 @@ app.get('/personaAfiliadoUsuario/:dni',(req, res) => {
 
 // Registrarse 
 app.post('/registrar',(req, res) => {
-  
+
+  const passwordHash = bcrypt.hashSync(req.body.con_usu,10);
+  console.log(passwordHash)
   // Post usuario
-  let data = {nom_usu: req.body.nom_usu, con_usu: req.body.con_usu, id_tusu: req.body.id_tusu};
+  let data = {nom_usu: req.body.nom_usu, con_usu: passwordHash, id_tusu: req.body.id_tusu};
   let sql = "INSERT INTO usuario SET ?";
   let query = conn.query(sql, data,(err, results) => {
     if(err) throw err;
@@ -129,10 +132,12 @@ app.get('/login/:username/:password',(req, res) => {
     
     if(objUsuario[0]){
 
-        // VALIDAR INGRESO - PASSWORD
-        // Encriptar
-        if (req.params.password !== objUsuario[0].con_usu) { 
-          res.send(JSON.stringify({"status": 200, "error": null, "response": ['Contrasena incorrecta.']}));
+        // VALIDAR INGRESO - PASSWORD 
+        const verified = bcrypt.compareSync(req.params.password,objUsuario[0].con_usu);
+        console.log('verified: ', verified)
+        
+        if ( !verified ) { 
+          res.send(JSON.stringify({"status": 200, "error": null, "response": ['Contraseña incorrecta.']}));
           return;
         }
 
@@ -204,7 +209,7 @@ app.get('/login/:username/:password',(req, res) => {
 
 
     }else{
-      res.send(JSON.stringify({"status": 200, "error": null, "response": results+'Usuario no encontrado.'}));
+      res.send(JSON.stringify({"status": 200, "error": null, "response": ['Usuario no encontrado.']}));
     }
  
  
