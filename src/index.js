@@ -70,7 +70,7 @@ app.get('/personaAfiliadoUsuario/:dni',(req, res) => {
 
 
     }else{
-      res.send(JSON.stringify({"status": 200, "error": null, "response": results}));
+      res.send(JSON.stringify({"status": 200, "error": null, "response": 'results'}));
     }
   });
 });
@@ -113,6 +113,102 @@ app.post('/registrar',(req, res) => {
  //   }
  
   
+
+  });
+});
+
+
+// Login
+app.get('/login/:username/:password',(req, res) => {
+  let sql = `SELECT * FROM usuario WHERE nom_usu = '${req.params.username}'`;
+  let query = conn.query(sql, (err, results) => {
+    if(err) throw err;
+    rowArray = JSON.stringify(results); 
+    objUsuario = JSON.parse(rowArray);    
+    
+    
+    if(objUsuario[0]){
+
+        // VALIDAR INGRESO - PASSWORD
+        // Encriptar
+        if (req.params.password !== objUsuario[0].con_usu) { 
+          res.send(JSON.stringify({"status": 200, "error": null, "response": ['Contrasena incorrecta.']}));
+          return;
+        }
+
+        // Start persona      
+        let sql2 = `SELECT idPersona FROM persona WHERE idUsuario = ${objUsuario[0].id_usu}`;
+        let query2 = conn.query(sql2, (err2, results2) => {
+          if(err2) throw err2;
+          rowArray2 = JSON.stringify(results2); 
+          objPersona = JSON.parse(rowArray2); 
+
+          if(objPersona[0]){
+            // Start afiliado
+            let sql3 = `SELECT idPersona FROM usuarioactivo WHERE idPersona = '${objPersona[0].idPersona}'`;
+            let query3 = conn.query(sql3, (err3, results3) => {
+              if(err3) throw err3; 
+              rowArray3 = JSON.stringify(results3); 
+              objUsuarioactivo = JSON.parse(rowArray3);
+
+
+              if (objUsuarioactivo[0]) {
+                // Afiliado titular
+                let sql32 = `
+                  SELECT afiliado.numAfiliado, persona.nombrePersona, afiliado.fingresoAfiliado, persona.documentoPersona, emp.rs_emp
+                  FROM afiliado 
+                  INNER JOIN emp ON emp.id_emp = afiliado.id_emp
+                  INNER JOIN persona ON persona.idPersona = afiliado.idPersona
+                  WHERE persona.idPersona = '${objPersona[0].idPersona}'
+                `;
+                let query = conn.query(sql32, (err32, results32) => {
+                  if(err32) throw err32; 
+                  res.send(JSON.stringify({"status": 200, "error": null, "response": [{afiliadoTitular:true},results32]}));
+                });
+              } else {
+                // Start afiliadoflia 
+                // Familiar del afiliado (HACER QUERY CON LOS DATOS DE LA CREDENCIAL)
+                let sql4 = `SELECT afiliado.numAfiliado, persona.nombrePersona, afiliado.fingresoAfiliado, persona.documentoPersona, emp.rs_emp, afiliadoflia.parentescoAfiliadoflia, personaTitular.nombrePersona AS nombrePersonaTitular
+                  FROM afiliadoflia
+                  INNER JOIN persona ON persona.idPersona = afiliadoflia.idPersona
+                  INNER JOIN afiliado ON afiliado.idPersona = afiliadoflia.idPersonaA
+                  INNER JOIN emp ON emp.id_emp = afiliado.id_emp
+                  INNER JOIN persona AS personaTitular ON personaTitular.idPersona = afiliadoflia.idPersonaA 
+                  WHERE persona.idPersona = ${objPersona[0].idPersona}`;
+                let query4 = conn.query(sql4, (err4, results4) => {
+                  if(err4) throw err4; 
+                  rowArray4 = JSON.stringify(results4); 
+                  objAfiliadoflia = JSON.parse(rowArray4);
+    
+                  if (objAfiliadoflia[0]) {
+                    res.send(JSON.stringify({"status": 200, "error": null, "response": [{afiliadoTitular:false},results4]})); 
+                  } else {
+                    // No se encontro el afiliado
+                    res.send(JSON.stringify({"status": 200, "error": null, "response": results4+'Algo anduvo mal'}));
+                  }
+                });
+                // End afiliadoflia
+              }
+            });
+            // End afiliado
+
+
+          }else{
+            // No se encontro la persona 
+            res.send(JSON.stringify({"status": 200, "error": null, "response": ['Algo anduvo mal']}));
+          }
+
+        });
+        // End persona
+
+
+
+    }else{
+      res.send(JSON.stringify({"status": 200, "error": null, "response": results+'Usuario no encontrado.'}));
+    }
+ 
+ 
+
 
   });
 });
