@@ -40,15 +40,60 @@ app.post('/send-email', (req, res) => {
     post:'587', //465 para SSL y 587 para TSL.
     secure: false,
     auth:{
-      user:'technologyblog0@gmail.com',
-      pass:'umbgmmajpwujsntu'
+      user:'recuperarsindicatocarne@gmail.com',
+      pass:'wjjdozamtdrbuyju'
     }
   })
   let mailOptions = {
     from:'Remitente',
     to: emailUser,
     subject:'Nueva contraseña',
-    text:'Su nueva contraseña es: ' + newPassword,
+    //text: `Su nueva contraseña es:  ${newPassword} ?`,
+    html: `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+      
+        <style>
+          .landing { 
+            background: #043464;
+            padding: 25px
+          } 
+          .title {
+            font-size: 1.9rem;
+            color: white;
+            margin-left: 20px;
+            margin-top: 15px
+          }
+          .subtitle { 
+            font-size: 1.2rem;
+            color: white;
+            margin-left: 20px;
+            margin-button: 20px
+          } 
+        </style>
+      </head>
+      <body>
+      
+      <!-- Start Landing Page-->
+      <div class="landing pt-2">
+        <div class="container-fluid pt-1 pb-5">
+          <div class="row justify-content-center p-5">
+            <div class="col-12 text-center">
+              <p class="title text-light font-weight-bold">Hola, se han modificado tus datos de acceso. </p>
+              <p class="subtitle text-light pb-3">Tu nueva contraseña es: ${newPassword} </p> 
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- End Landing Page -->
+        
+      </body>
+      </html>  
+    `
   }
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
