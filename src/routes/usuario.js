@@ -189,17 +189,17 @@ router.get('/usuarioactivoflia/:id', (req, res) => {
 });
 
 // GET un Usuario via dni
-router.get('/usuarios/:dni', (req, res) => {
-    const { dni } = req.params;
-    mysqlConnection.query(`SELECT * FROM usuarioactivo WHERE documentoPersona = ${dni}`, (err, rows, fields) => {
-      if (!err) {
-         res.json(rows[0]); 
-      } else { 
-        res.status(404).json({ err });
-        console.log(err);
-      } 
-    });
-  });
+// router.get('/usuarios/:dni', (req, res) => {
+//     const { dni } = req.params;
+//     mysqlConnection.query(`SELECT * FROM usuarioactivo WHERE documentoPersona = ${dni}`, (err, rows, fields) => {
+//       if (!err) {
+//          res.json(rows[0]); 
+//       } else { 
+//         res.status(404).json({ err });
+//         console.log(err);
+//       } 
+//     });
+//   });
 
 
 // // GET todos Usuarios - usuarioactivo

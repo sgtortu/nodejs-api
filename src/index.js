@@ -2,6 +2,9 @@ const express = require('express');
 const app = express();
 const conn  = require('./database'); 
 const bcrypt = require('bcryptjs'); 
+const nodemailer = require('nodemailer');
+const gP = require('./generatePass');
+ 
 
 // Settings
 app.set('port', process.env.PORT || 3000);
@@ -17,63 +20,174 @@ app.listen(app.get('port'), () => {
   console.log(`Server on port ${app.get('port')}`);
 });
 
+/*
+  EMAIL
+*/
 
+
+app.post('/send-email', (req, res) => {
+
+  let emailUser = req.body.email;
+
+  let newPassword = gP();
+  let newPasswordHash = bcrypt.hashSync(newPassword,10)
+  console.log('newPassword - >   ', newPassword) 
+  console.log('newPasswordHash - >   ', newPasswordHash) 
+  console.log('emailUser - >   ', emailUser) 
+
+  let transporter = nodemailer.createTransport({
+    host:'smtp.gmail.com.',
+    post:'587', //465 para SSL y 587 para TSL.
+    secure: false,
+    auth:{
+      user:'technologyblog0@gmail.com',
+      pass:'umbgmmajpwujsntu'
+    }
+  })
+  let mailOptions = {
+    from:'Remitente',
+    to: emailUser,
+    subject:'Nueva contraseña',
+    text:'Su nueva contraseña es: ' + newPassword,
+  }
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      res.status(500).send(error.message);
+    }else{
+      // update usuario.con_usu where persona.mail = email (idUsuario)
+      // recordar hash password
+      let sql = `
+        UPDATE persona 
+        INNER JOIN usuario ON usuario.id_usu = persona.idUsuario
+        SET usuario.con_usu = '${newPasswordHash}'
+        WHERE persona.mailPersona = '${emailUser}'
+      `
+      let query = conn.query(sql, (err, results) => {
+        if(err) throw err;
+        res.send(JSON.stringify({"status": 200, "error": null, "response": true}));
+        console.log('Email enviado')
+      });
+
+
+    }
+  })
+})
 /*
   RUTAS
 */
 
-// GET persona - afiliadoflia - usuarioactivo
-app.get('/personaAfiliadoUsuario/:dni',(req, res) => {
-  
-  let sql = "SELECT idPersona FROM persona WHERE documentoPersona="+req.params.dni;
+// Para afiliado titular
+// GET usuarioactivo - persona
+app.get('/usuarios/:dni',(req, res) => {
+  let sql = "SELECT idUsuario FROM persona WHERE documentoPersona="+req.params.dni; 
   let query = conn.query(sql, (err, results) => {
     if(err) throw err;
     rowArray = JSON.stringify(results); 
-    objPersona = JSON.parse(rowArray); 
-    if (objPersona[0]) {
+    objIdusuario = JSON.parse(rowArray);
+    console.log('---',objIdusuario[0].idUsuario)
+    if( objIdusuario[0].idUsuario === null ) {
       
-      // Start afiliadoflia
-      let sql2 = `SELECT idPersonaA 
-        FROM afiliadoflia
-        WHERE idPersona = ${objPersona[0].idPersona}
-      ` 
+      // NO se ha registrado aun
+
+      let sql2 = `SELECT * FROM usuarioactivo WHERE documentoPersona = ${req.params.dni}`; 
       let query2 = conn.query(sql2, (err2, results2) => {
         if(err2) throw err2;
-        rowArray2 = JSON.stringify(results2); 
-        objAfiliadoflia = JSON.parse(rowArray2);
-        if (objAfiliadoflia[0]) {
-          
-          // Start usuarioactivo
-          let sql3 = `SELECT id_usu
-            FROM usuarioactivo 
-            WHERE idPersona = ${objAfiliadoflia[0].idPersonaA}
-          ` 
-          let query3 = conn.query(sql3, (err3, results3) => {
-            if(err3) throw err3;
-            rowArray3 = JSON.stringify(results3); 
-            objAfiliadoflia = JSON.parse(rowArray3);
-            if (objAfiliadoflia[0]) {
-              // respuesta final     
-              return res.send(JSON.stringify({"status": 200, "error": null, "response": results}));
+        res.send(JSON.stringify({"status": 200, "error": null, "response": results2}));
+      });
 
+    }else{
+
+      // Ya se ha registrado
+      res.send(JSON.stringify({"status": 200, "error": null, "response": 'Ya te has registrado (titular).'})); 
+    }
+  });
+});
+
+// Para familiar del afiliado
+// GET persona - afiliadoflia - usuarioactivo
+app.get('/personaAfiliadoUsuario/:dni',(req, res) => {
+  
+  // Chequear si en persona (dni) el campo idUsuario tiene datos
+      // Si tiene es porque ya se ha registrado
+
+  let sql4 = `SELECT persona.idUsuario FROM persona WHERE documentoPersona = '${req.params.dni}'`;
+  let query4 = conn.query(sql4, (err4, results4) => {
+    if(err4) throw err4;
+    //res.send(JSON.stringify({"status": 200, "error": null, "response": results3}));
+    rowArray4 = JSON.stringify(results4); 
+    objIdusuario = JSON.parse(rowArray4);
+    console.log(objIdusuario[0].idUsuario)
+
+    if( objIdusuario[0].idUsuario === null ) {
+
+
+      // En caso de que no se haya registrado
+
+
+      let sql = "SELECT idPersona FROM persona WHERE documentoPersona="+req.params.dni;
+      let query = conn.query(sql, (err, results) => {
+        if(err) throw err;
+        rowArray = JSON.stringify(results); 
+        objPersona = JSON.parse(rowArray); 
+        if (objPersona[0]) {
+          
+          // Start afiliadoflia
+          let sql2 = `SELECT idPersonaA 
+            FROM afiliadoflia
+            WHERE idPersona = ${objPersona[0].idPersona}
+          ` 
+          let query2 = conn.query(sql2, (err2, results2) => {
+            if(err2) throw err2;
+            rowArray2 = JSON.stringify(results2); 
+            objAfiliadoflia = JSON.parse(rowArray2);
+            if (objAfiliadoflia[0]) {
+              
+              // Start usuarioactivo
+              let sql3 = `SELECT id_usu
+                FROM usuarioactivo 
+                WHERE idPersona = ${objAfiliadoflia[0].idPersonaA}
+              ` 
+              let query3 = conn.query(sql3, (err3, results3) => {
+                if(err3) throw err3;
+                rowArray3 = JSON.stringify(results3); 
+                objAfiliadoflia = JSON.parse(rowArray3);
+                if (objAfiliadoflia[0]) {
+                  // respuesta final     
+                  return res.send(JSON.stringify({"status": 200, "error": null, "response": results}));
+    
+                }else{
+                  return res.send(JSON.stringify({"status": 200, "error": null, "response": results}));
+                }
+              });
+              // End usuarioactivo
+    
+    
             }else{
               return res.send(JSON.stringify({"status": 200, "error": null, "response": results}));
             }
           });
-          // End usuarioactivo
-
-
+          // End afiliadoflia
+    
+    
         }else{
-          return res.send(JSON.stringify({"status": 200, "error": null, "response": results}));
+          res.send(JSON.stringify({"status": 200, "error": null, "response": results}));
         }
       });
-      // End afiliadoflia
+
+
+
+
 
 
     }else{
-      res.send(JSON.stringify({"status": 200, "error": null, "response": 'results'}));
+
+      // En caso de que ya se haya registrado
+
+      res.send(JSON.stringify({"status": 200, "error": null, "response": 'Ya te has registrado.'})); 
     }
   });
+  
+ 
 });
 
  
@@ -82,42 +196,64 @@ app.get('/personaAfiliadoUsuario/:dni',(req, res) => {
 
 
 // Registrarse 
-app.post('/registrar',(req, res) => {
+app.post('/registrar',(req, res) => { 
+console.log('req.body.nom_usu: ',req.body.nom_usu)
+  // Username existente 
+  let sql0 = `SELECT usuario.nom_usu FROM usuario WHERE nom_usu = '${req.body.nom_usu}'`;
+  let query0 = conn.query(sql0, (err0, results0) => {
+    if(err0) throw err0; 
+    row = JSON.stringify(results0); 
+    objusername = JSON.parse(row); 
+    console.log('objusername[0]: ', objusername[0])
 
-  const passwordHash = bcrypt.hashSync(req.body.con_usu,10);
-  console.log(passwordHash)
-  // Post usuario
-  let data = {nom_usu: req.body.nom_usu, con_usu: passwordHash, id_tusu: req.body.id_tusu};
-  let sql = "INSERT INTO usuario SET ?";
-  let query = conn.query(sql, data,(err, results) => {
-    if(err) throw err;
-    //res.send(JSON.stringify({"status": 200, "error": null, "response": results}));
-    // Obtener id del usuario creado recien
-    rowArray3 = JSON.stringify(results); 
-    obj = JSON.parse(rowArray3);
-    //console.log('new id: ',obj.insertId)
- 
- //   if (obj.insertId) {     
-      // Put persona  
-      let sqlPersona = ` UPDATE persona
-      SET persona.nombrePersona = '${req.body.nombre} ${req.body.apellido}',
-      persona.cuilPersona = '${req.body.cuil}',
-      persona.celPersona = '${req.body.celular}',
-      persona.mailPersona = '${req.body.mail}',
-      persona.idUsuario = '${obj.insertId}'
-      WHERE persona.idPersona = '${req.body.idPersona}'       
-      `; 
-      let query2 = conn.query(sqlPersona, (err2, results2) => {
-        if(err2) throw err2;
-        res.send(JSON.stringify({"status": 200, "error": null, "response": results}));
+    if (objusername[0]) {
+      // username existente 
+      res.send({"status": 200, "error": null, "response": 'Usuario existe'});
 
-        //res.send(JSON.stringify({"status": 200, "error": null, "response": results2}));
+    } else {
+
+
+      // continue (username no existe)
+
+      const passwordHash = bcrypt.hashSync(req.body.con_usu,10);
+      console.log(passwordHash)
+      // Post usuario
+      let data = {nom_usu: req.body.nom_usu, con_usu: passwordHash, id_tusu: req.body.id_tusu};
+      let sql = "INSERT INTO usuario SET ?";
+      let query = conn.query(sql, data,(err, results) => {
+        if(err) throw err; 
+        // Obtener id del usuario creado recien
+        rowArray3 = JSON.stringify(results); 
+        obj = JSON.parse(rowArray3); 
+        
+          // Put persona  
+          let sqlPersona = ` UPDATE persona
+          SET persona.nombrePersona = '${req.body.nombre} ${req.body.apellido}',
+          persona.cuilPersona = '${req.body.cuil}',
+          persona.celPersona = '${req.body.celular}',
+          persona.mailPersona = '${req.body.mail}',
+          persona.idUsuario = '${obj.insertId}'
+          WHERE persona.idPersona = '${req.body.idPersona}'       
+          `; 
+          let query2 = conn.query(sqlPersona, (err2, results2) => {
+            if(err2) throw err2;
+            res.send(JSON.stringify({"status": 200, "error": null, "response": results}));
+    
+            //res.send(JSON.stringify({"status": 200, "error": null, "response": results2}));
+          });
+     //   }
+     
+      
+    
       });
- //   }
- 
-  
 
+
+
+
+    }
   });
+
+  
 });
 
 
