@@ -4,7 +4,8 @@ const conn  = require('./database');
 const bcrypt = require('bcryptjs'); 
 const nodemailer = require('nodemailer');
 const gP = require('./generatePass');
- 
+const Canvas = require("canvas")
+const PDF417 = require("pdf417-generator")
 
 // Settings
 app.set('port', process.env.PORT || 3000);
@@ -400,3 +401,33 @@ app.get('/login/:username/:password',(req, res) => {
 });
 
 
+// Get imagen dni (pdf417)
+app.get('/pdf417/:dni',(req, res) => {
+  
+  let sql = `SELECT * FROM persona WHERE documentoPersona = '${req.params.dni}'`;
+  let query = conn.query(sql, (err, results) => {
+    if(err) throw err;
+    rowArray = JSON.stringify(results); 
+    objPersona = JSON.parse(rowArray);    
+    let cadena = objPersona[0].nombrePersona;
+    nombreYapellido = cadena.split(' ', 2);
+    console.log('---> ',nombreYapellido[0])
+    let code = [
+      "000", // codigo '00281981382'
+      nombreYapellido[1],
+      nombreYapellido[0],
+      objPersona[0].sexoPersona,
+      objPersona[0].documentoPersona,
+      "0", // ejemplar
+      objPersona[0].fechanacPersona,
+      "00/00/0000", // fecha de emision dni
+    ]
+    
+    
+    let canvas = new Canvas.Canvas()
+    PDF417.draw(code, canvas)
+    res.send(JSON.stringify({"status": 200, "error": null, "response": [`${canvas.toDataURL()}`]})); 
+  });
+
+   
+});
