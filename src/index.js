@@ -4,8 +4,8 @@ const conn  = require('./database');
 const bcrypt = require('bcryptjs'); 
 const nodemailer = require('nodemailer');
 const gP = require('./generatePass');
-const Canvas = require("canvas")
-const PDF417 = require("pdf417-generator")
+const Canvas = require("canvas");
+const PDF417 = require("pdf417-generator");
 
 // Settings
 app.set('port', process.env.PORT || 3000);
