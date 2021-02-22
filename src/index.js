@@ -8,7 +8,7 @@ const Canvas = require("canvas");
 const PDF417 = require("pdf417-generator");
 
 // Settings
-app.set('port', process.env.PORT || 3000);
+app.set('port', process.env.PORT || 3007);
 
 // Middlewares --> Antes de procesar algo (antes de la ruta)
 app.use(express.json());
