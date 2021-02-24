@@ -8,7 +8,10 @@ const Canvas = require("canvas");
 const PDF417 = require("pdf417-generator");
 var catalogRouter = require('./routes/catalog'); //Import routes for "catalog" area of site
 var compression = require('compression');
+var helmet = require('helmet');
 
+var app = express();
+app.use(helmet());
 // Settings
 app.set('port', process.env.PORT || 3000);
 
@@ -16,28 +19,30 @@ app.set('port', process.env.PORT || 3000);
 app.use(express.json());
 
 // Routes
-app.use(require('./routes/usuario')); 
+
+app.use(compression()); //Compress all routes
 
 // Starting the server
 app.listen(app.get('port'), () => {
   console.log(`Server on port ${app.get('port')}`);
 });
 
+app.use(require('./routes/usuario')); 
 /*
-  EMAIL
+EMAIL
 */
 
 app.use('/catalog', catalogRouter);  // Add catalog routes to middleware chain.
 app.post('/send-email', (req, res) => {
-
+  
   let emailUser = req.body.email;
-
+  
   let newPassword = gP();
   let newPasswordHash = bcrypt.hashSync(newPassword,10)
   console.log('newPassword - >   ', newPassword) 
   console.log('newPasswordHash - >   ', newPasswordHash) 
   console.log('emailUser - >   ', emailUser) 
-
+  
   let transporter = nodemailer.createTransport({
     host:'smtp.gmail.com.',
     post:'587', //465 para SSL y 587 para TSL.
