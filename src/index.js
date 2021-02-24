@@ -8,7 +8,7 @@ const Canvas = require("canvas");
 const PDF417 = require("pdf417-generator");
 
 // Settings
-app.set('port', process.env.PORT || 3007);
+app.set('port', process.env.PORT || 3000);
 
 // Middlewares --> Antes de procesar algo (antes de la ruta)
 app.use(express.json());
@@ -409,20 +409,19 @@ app.get('/pdf417/:dni',(req, res) => {
     if(err) throw err;
     rowArray = JSON.stringify(results); 
     objPersona = JSON.parse(rowArray);    
-    let cadena = objPersona[0].nombrePersona;
-    nombreYapellido = cadena.split(' ', 2);
-    console.log('---> ',nombreYapellido[0])
-    let code = [
-      "000", // codigo '00281981382'
-      nombreYapellido[1],
-      nombreYapellido[0],
-      objPersona[0].sexoPersona,
-      objPersona[0].documentoPersona,
-      "0", // ejemplar
-      objPersona[0].fechanacPersona,
-      "00/00/0000", // fecha de emision dni
-    ]
+
+    // Format name
+    let fullname = objPersona[0].nombrePersona;
+    var firstName = fullname.split(' ').slice(0, -1).join(' ');
+    var lastName = fullname.split(' ').slice(-1).join(' ');
+
+    //Format date
+    let date = objPersona[0].fechanacPersona
+    let dateSplit = date.substr(0,10);
+    let dateFormat = dateSplit.split('-');
+    let dateResult = dateFormat[2]+'/'+dateFormat[1]+'/'+dateFormat[0]; 
     
+    let code = [`000@${lastName}@${firstName}@${objPersona[0].sexoPersona}@${objPersona[0].documentoPersona}@0@${dateResult}@00/00/0000`]
     
     let canvas = new Canvas.Canvas()
     PDF417.draw(code, canvas)
