@@ -6,6 +6,8 @@ const nodemailer = require('nodemailer');
 const gP = require('./generatePass');
 const Canvas = require("canvas");
 const PDF417 = require("pdf417-generator");
+var catalogRouter = require('./routes/catalog'); //Import routes for "catalog" area of site
+var compression = require('compression');
 
 // Settings
 app.set('port', process.env.PORT || 3000);
@@ -25,7 +27,7 @@ app.listen(app.get('port'), () => {
   EMAIL
 */
 
-
+app.use('/catalog', catalogRouter);  // Add catalog routes to middleware chain.
 app.post('/send-email', (req, res) => {
 
   let emailUser = req.body.email;
