@@ -9,7 +9,7 @@ const mysqlConnection = mysql.createConnection({
   // user: 'root',
   // password: 'Password.1',
   // database: 'SindicatoCarneDB',
-  // multipleStatements: true
+  multipleStatements: true
 });
 
 mysqlConnection.connect(function (err) {
