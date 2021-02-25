@@ -6,14 +6,36 @@ const nodemailer = require('nodemailer');
 const gP = require('./generatePass');
 const Canvas = require("canvas");
 const PDF417 = require("pdf417-generator");
-var catalogRouter = require('./routes/catalog'); //Import routes for "catalog" area of site
+//var catalogRouter = require('./routes/catalog'); //Import routes for "catalog" area of site
 var compression = require('compression');
 var helmet = require('helmet');
-
-var app = express();
+ 
 app.use(helmet());
 // Settings
-app.set('port', process.env.PORT || 3000);
+//app.set('port', process.env.PORT || 5555);
+const http = require('http');
+
+http.createServer((request, response) => {
+  request.on('error', (err) => {
+    console.error(err);
+    response.statusCode = 400;
+    response.end();
+  });
+  response.on('error', (err) => {
+    console.error(err);
+  });
+  if (request.method === 'POST' && request.url === '/echo') {
+    request.pipe(response);
+  } else {
+    response.statusCode = 404;
+    response.end();
+  }
+}).listen(8080);
+const port = 5555;
+server.listen(port, function () {
+  console.log("Server running on Port: " + port);
+});
+
 
 // Middlewares --> Antes de procesar algo (antes de la ruta)
 app.use(express.json());
@@ -23,16 +45,16 @@ app.use(express.json());
 app.use(compression()); //Compress all routes
 
 // Starting the server
-app.listen(app.get('port'), () => {
-  console.log(`Server on port ${app.get('port')}`);
-});
+// app.listen(app.get('port'), () => {
+//   console.log(`Server on port ${app.get('port')}`);
+// });
 
 app.use(require('./routes/usuario')); 
 /*
 EMAIL
 */
 
-app.use('/catalog', catalogRouter);  // Add catalog routes to middleware chain.
+//app.use('/catalog', catalogRouter);  // Add catalog routes to middleware chain.
 app.post('/send-email', (req, res) => {
   
   let emailUser = req.body.email;
