@@ -8,7 +8,7 @@ const Canvas = require("canvas");
 const PDF417 = require("pdf417-generator"); 
  
 // Settings
-app.set('port', process.env.PORT || 3002);
+app.set('port', process.env.PORT || 3000);
 
 // Middlewares --> Antes de procesar algo (antes de la ruta)
 app.use(express.json());
@@ -17,23 +17,34 @@ app.use(express.json());
 
 // Starting the server
 app.listen(app.get('port'), () => {
-  console.log(`Server on port ${app.get('port')}`);
+  //console.log(`Server on port ${app.get('port')}`);
 });
 
 app.use(require('./routes/usuario')); 
 /*
 EMAIL
 */
+app.get('/',(req,res)=>res.send('hello world'))
  
 app.post('/send-email', (req, res) => {
   
-  let emailUser = req.body.email;
-  
-  let newPassword = gP();
+  let emailUser = req.body.email; 
+
+   // Email existente 
+ let sql0 = `SELECT persona.mailPersona FROM persona WHERE mailPersona = '${emailUser}'`;
+ let query0 = conn.query(sql0, (err0, results0) => {
+   if(err0) throw err0; 
+   row = JSON.stringify(results0); 
+   objEmail = JSON.parse(row); 
+   //console.log('objEmail[0]: ', objEmail[0])
+
+   if (objEmail[0]) {
+      //Email existe
+      let newPassword = gP();
   let newPasswordHash = bcrypt.hashSync(newPassword,10)
-  console.log('newPassword - >   ', newPassword) 
-  console.log('newPasswordHash - >   ', newPasswordHash) 
-  console.log('emailUser - >   ', emailUser) 
+  //console.log('newPassword - >   ', newPassword) 
+  //console.log('newPasswordHash - >   ', newPasswordHash) 
+  //console.log('emailUser - >   ', emailUser) 
   
   let transporter = nodemailer.createTransport({
     host:'smtp.gmail.com.',
@@ -109,13 +120,26 @@ app.post('/send-email', (req, res) => {
       `
       let query = conn.query(sql, (err, results) => {
         if(err) throw err;
-        res.send(JSON.stringify({"status": 200, "error": null, "response": true}));
-        console.log('Email enviado')
+        rowArray = JSON.stringify(results); 
+        obj = JSON.parse(rowArray);
+        console.log('obj[0]  ', obj[0])
+        if (obj[0]) {
+          res.send(JSON.stringify({"status": 200, "error": null, "response": true})); 
+        }else{
+          //Email NO existe
+          res.send(JSON.stringify({"status": 200, "error": null, "response": false}));
+        }
       });
 
 
     }
   })
+  }else{ 
+      res.send(JSON.stringify({"status": 200, "error": null, "response": false}));
+
+   }
+  });
+  
 })
 /*
   RUTAS
@@ -129,7 +153,7 @@ app.get('/usuarios/:dni',(req, res) => {
     if(err) throw err;
     rowArray = JSON.stringify(results); 
     objIdusuario = JSON.parse(rowArray);
-    console.log('---',objIdusuario[0].idUsuario)
+    //console.log('---',objIdusuario[0].idUsuario)
     if( objIdusuario[0].idUsuario === null ) {
       
       // NO se ha registrado aun
@@ -161,7 +185,7 @@ app.get('/personaAfiliadoUsuario/:dni',(req, res) => {
     //res.send(JSON.stringify({"status": 200, "error": null, "response": results3}));
     rowArray4 = JSON.stringify(results4); 
     objIdusuario = JSON.parse(rowArray4);
-    console.log(objIdusuario[0].idUsuario)
+    //console.log(objIdusuario[0].idUsuario)
 
     if( objIdusuario[0].idUsuario === null ) {
 
@@ -242,14 +266,14 @@ app.get('/personaAfiliadoUsuario/:dni',(req, res) => {
 
 // Registrarse 
 app.post('/registrar',(req, res) => { 
-console.log('req.body.nom_usu: ',req.body.nom_usu)
+//console.log('req.body.nom_usu: ',req.body.nom_usu)
   // Username existente 
   let sql0 = `SELECT usuario.nom_usu FROM usuario WHERE nom_usu = '${req.body.nom_usu}'`;
   let query0 = conn.query(sql0, (err0, results0) => {
     if(err0) throw err0; 
     row = JSON.stringify(results0); 
     objusername = JSON.parse(row); 
-    console.log('objusername[0]: ', objusername[0])
+    //console.log('objusername[0]: ', objusername[0])
 
     if (objusername[0]) {
       // username existente 
@@ -261,7 +285,7 @@ console.log('req.body.nom_usu: ',req.body.nom_usu)
       // continue (username no existe)
 
       const passwordHash = bcrypt.hashSync(req.body.con_usu,10);
-      console.log(passwordHash)
+      //console.log(passwordHash)
       // Post usuario
       let data = {nom_usu: req.body.nom_usu, con_usu: passwordHash, id_tusu: req.body.id_tusu};
       let sql = "INSERT INTO usuario SET ?";
@@ -270,7 +294,7 @@ console.log('req.body.nom_usu: ',req.body.nom_usu)
         // Obtener id del usuario creado recien
         rowArray3 = JSON.stringify(results); 
         obj = JSON.parse(rowArray3); 
-        
+        //console.log('insertID: ',obj.insertId)
           // Put persona  
           let sqlPersona = ` UPDATE persona
           SET persona.nombrePersona = '${req.body.nombre} ${req.body.apellido}',
@@ -315,7 +339,7 @@ app.get('/login/:username/:password',(req, res) => {
 
         // VALIDAR INGRESO - PASSWORD 
         const verified = bcrypt.compareSync(req.params.password,objUsuario[0].con_usu);
-        console.log('verified: ', verified)
+        //console.log('verified: ', verified)
         
         if ( !verified ) { 
           res.send(JSON.stringify({"status": 200, "error": null, "response": ['Contraseña incorrecta.']}));
@@ -381,7 +405,7 @@ app.get('/login/:username/:password',(req, res) => {
 
           }else{
             // No se encontro la persona 
-            res.send(JSON.stringify({"status": 200, "error": null, "response": ['Algo anduvo mal']}));
+            res.send(JSON.stringify({"status": 200, "error": null, "response": ['Algo anduvo mal.']}));
           }
 
         });
