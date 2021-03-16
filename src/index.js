@@ -8,7 +8,7 @@ const Canvas = require("canvas");
 const PDF417 = require("pdf417-generator"); 
  
 // Settings
-app.set('port', process.env.PORT || 3000);
+app.set('port', process.env.PORT || 3001);
 
 // Middlewares --> Antes de procesar algo (antes de la ruta)
 app.use(express.json());
@@ -17,7 +17,7 @@ app.use(express.json());
 
 // Starting the server
 app.listen(app.get('port'), () => {
-  //console.log(`Server on port ${app.get('port')}`);
+  console.log(`Server on port ${app.get('port')}`);
 });
 
 app.use(require('./routes/usuario')); 
@@ -39,101 +39,101 @@ app.post('/send-email', (req, res) => {
    //console.log('objEmail[0]: ', objEmail[0])
 
    if (objEmail[0]) {
-      //Email existe
-      let newPassword = gP();
-  let newPasswordHash = bcrypt.hashSync(newPassword,10)
-  //console.log('newPassword - >   ', newPassword) 
-  //console.log('newPasswordHash - >   ', newPasswordHash) 
-  //console.log('emailUser - >   ', emailUser) 
-  
-  let transporter = nodemailer.createTransport({
-    host:'smtp.gmail.com.',
-    post:'587', //465 para SSL y 587 para TSL.
-    secure: false,
-    auth:{
-      user:'recuperarsindicatocarne@gmail.com',
-      pass:'wjjdozamtdrbuyju'
-    }
-  })
-  let mailOptions = {
-    from:'Remitente',
-    to: emailUser,
-    subject:'Nueva contraseña',
-    //text: `Su nueva contraseña es:  ${newPassword} ?`,
-    html: `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    //Email existe
+    let newPassword = gP();
+    let newPasswordHash = bcrypt.hashSync(newPassword,10)
+    console.log('newPassword - >   ', newPassword) 
+    console.log('newPasswordHash - >   ', newPasswordHash) 
+    console.log('emailUser - >   ', emailUser) 
 
-      
-        <style>
-          .landing { 
-            background: #043464;
-            padding: 25px
-          } 
-          .title {
-            font-size: 1.9rem;
-            color: white;
-            margin-left: 20px;
-            margin-top: 15px
-          }
-          .subtitle { 
-            font-size: 1.2rem;
-            color: white;
-            margin-left: 20px;
-            margin-button: 20px
-          } 
-        </style>
-      </head>
-      <body>
-      
-      <!-- Start Landing Page-->
-      <div class="landing pt-2">
-        <div class="container-fluid pt-1 pb-5">
-          <div class="row justify-content-center p-5">
-            <div class="col-12 text-center">
-              <p class="title text-light font-weight-bold">Hola, se han modificado tus datos de acceso. </p>
-              <p class="subtitle text-light pb-3">Tu nueva contraseña es: ${newPassword} </p> 
+    let transporter = nodemailer.createTransport({
+      host:'smtp.gmail.com.',
+      post:'465', //465 para SSL y 587 para TLS.
+      secure: false,
+      auth:{
+        user:'recuperarsindicatocarne@gmail.com',
+        pass:'wjjdozamtdrbuyju'
+      }
+    })
+    let mailOptions = {
+      from:'Remitente',
+      to: emailUser,
+      subject:'Nueva contraseña',
+      //text: `Su nueva contraseña es:  ${newPassword} ?`,
+      html: `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+        
+          <style>
+            .landing { 
+              background: #043464;
+              padding: 25px
+            } 
+            .title {
+              font-size: 1.9rem;
+              color: white;
+              margin-left: 20px;
+              margin-top: 15px
+            }
+            .subtitle { 
+              font-size: 1.2rem;
+              color: white;
+              margin-left: 20px;
+              margin-button: 20px
+            } 
+          </style>
+        </head>
+        <body>
+        
+        <!-- Start Landing Page-->
+        <div class="landing pt-2">
+          <div class="container-fluid pt-1 pb-5">
+            <div class="row justify-content-center p-5">
+              <div class="col-12 text-center">
+                <p class="title text-light font-weight-bold">Hola, se han modificado tus datos de acceso. </p>
+                <p class="subtitle text-light pb-3">Tu nueva contraseña es: ${newPassword} </p> 
+              </div>
             </div>
           </div>
         </div>
-      </div>
-      <!-- End Landing Page -->
-        
-      </body>
-      </html>  
-    `
-  }
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      res.status(500).send(error.message);
-    }else{
-      // update usuario.con_usu where persona.mail = email (idUsuario)
-      // recordar hash password
-      let sql = `
-        UPDATE persona 
-        INNER JOIN usuario ON usuario.id_usu = persona.idUsuario
-        SET usuario.con_usu = '${newPasswordHash}'
-        WHERE persona.mailPersona = '${emailUser}'
+        <!-- End Landing Page -->
+          
+        </body>
+        </html>  
       `
-      let query = conn.query(sql, (err, results) => {
-        if(err) throw err;
-        rowArray = JSON.stringify(results); 
-        obj = JSON.parse(rowArray);
-        console.log('obj[0]  ', obj[0])
-        if (obj[0]) {
-          res.send(JSON.stringify({"status": 200, "error": null, "response": true})); 
-        }else{
-          //Email NO existe
-          res.send(JSON.stringify({"status": 200, "error": null, "response": false}));
-        }
-      });
-
-
     }
-  })
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        res.status(500).send(error.message);
+      }else{
+        // update usuario.con_usu where persona.mail = email (idUsuario)
+        // recordar hash password
+        let sql = `
+          UPDATE usuario
+          INNER JOIN persona ON usuario.id_usu = persona.idUsuario
+          SET usuario.con_usu = '${newPasswordHash}'
+          WHERE persona.mailPersona = '${emailUser}'
+        `
+        let query = conn.query(sql, (err, results) => {
+          if(err) throw err;
+          rowArray = JSON.stringify(results); 
+          obj = JSON.parse(rowArray);
+          console.log('obj[0]  ', obj)
+          if (obj) {
+            res.send(JSON.stringify({"status": 200, "error": null, "response": true})); 
+          }else{
+            //Email NO existe
+            res.send(JSON.stringify({"status": 200, "error": null, "response": false}));
+          }
+        });
+
+
+      }
+    })
   }else{ 
       res.send(JSON.stringify({"status": 200, "error": null, "response": false}));
 
@@ -197,46 +197,89 @@ app.get('/personaAfiliadoUsuario/:dni',(req, res) => {
       let query = conn.query(sql, (err, results) => {
         if(err) throw err;
         rowArray = JSON.stringify(results); 
-        objPersona = JSON.parse(rowArray); 
+        objPersona = JSON.parse(rowArray);  
+
         if (objPersona[0]) {
-          
-          // Start afiliadoflia
-          let sql2 = `SELECT idPersonaA 
-            FROM afiliadoflia
+         
+          // Compruebo si un AFILIADO TITULAR se quiere registrar como FAMILIAR... 
+          // Start checkAfiliadoTitular
+          let sql1 = `SELECT estadoAfiliado
+            FROM afiliado 
             WHERE idPersona = ${objPersona[0].idPersona}
           ` 
-          let query2 = conn.query(sql2, (err2, results2) => {
-            if(err2) throw err2;
-            rowArray2 = JSON.stringify(results2); 
-            objAfiliadoflia = JSON.parse(rowArray2);
-            if (objAfiliadoflia[0]) {
-              
-              // Start usuarioactivo
-              let sql3 = `SELECT id_usu
-                FROM usuarioactivo 
-                WHERE idPersona = ${objAfiliadoflia[0].idPersonaA}
-              ` 
-              let query3 = conn.query(sql3, (err3, results3) => {
-                if(err3) throw err3;
-                rowArray3 = JSON.stringify(results3); 
-                objAfiliadoflia = JSON.parse(rowArray3);
-                if (objAfiliadoflia[0]) {
-                  // respuesta final     
-                  return res.send(JSON.stringify({"status": 200, "error": null, "response": results}));
-    
-                }else{
-                  return res.send(JSON.stringify({"status": 200, "error": null, "response": results}));
-                }
-              });
-              // End usuarioactivo
-    
-    
-            }else{
-              return res.send(JSON.stringify({"status": 200, "error": null, "response": results}));
-            }
+          let query1 = conn.query(sql1, (err1, results1) => {
+            if(err1) throw err1;
+            rowArray1 = JSON.stringify(results1); 
+            objAfiliado = JSON.parse(rowArray1);
+            //console.log('objAfiliado ', objAfiliado[0].estadoAfiliado)
+            if (objAfiliado[0]) {
+              if (objAfiliado[0].estadoAfiliado === 'P') { 
+                return res.send(JSON.stringify({"status": 200, "error": null, "response": results1}));
+              }else{
+
+
+                // Start afiliadoflia
+                let sql2 = `SELECT idPersonaA 
+                FROM afiliadoflia
+                WHERE idPersona = ${objPersona[0].idPersona}
+                ` 
+                let query2 = conn.query(sql2, (err2, results2) => {
+                  if(err2) throw err2;
+                  rowArray2 = JSON.stringify(results2); 
+                  objAfiliadoflia = JSON.parse(rowArray2);
+                  
+                  if (objAfiliadoflia[0]) {
+                    
+                    // Start usuarioactivo
+                    let sql3 = `SELECT id_usu
+                      FROM usuarioactivo 
+                      WHERE idPersona = ${objAfiliadoflia[0].idPersonaA}
+                    ` 
+                    let query3 = conn.query(sql3, (err3, results3) => {
+                      if(err3) throw err3;
+                      rowArray3 = JSON.stringify(results3); 
+                      objAfiliadoflia = JSON.parse(rowArray3);
+                      if (objAfiliadoflia[0]) {
+                        // respuesta final     
+                        return res.send(JSON.stringify({"status": 200, "error": null, "response": results}));
+          
+                      }else{
+                        return res.send(JSON.stringify({"status": 200, "error": null, "response": results}));
+                      }
+                    });
+                    // End usuarioactivo
+          
+          
+                  }else{
+                    return res.send(JSON.stringify({"status": 200, "error": null, "response": results}));
+                  }
+
+
+
+                });
+                // End afiliadoflia
+  
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+              }
+
+            } 
           });
-          // End afiliadoflia
-    
+          // End  
+
+
+
+
+
+          
     
         }else{
           res.send(JSON.stringify({"status": 200, "error": null, "response": results}));
@@ -277,7 +320,7 @@ app.post('/registrar',(req, res) => {
 
     if (objusername[0]) {
       // username existente 
-      res.send({"status": 200, "error": null, "response": 'Usuario existe'});
+      res.send({"status": 200, "error": null, "response": 'El nombre de usuario ya existe.'});
 
     } else {
 
@@ -297,10 +340,11 @@ app.post('/registrar',(req, res) => {
         //console.log('insertID: ',obj.insertId)
           // Put persona  
           let sqlPersona = ` UPDATE persona
-          SET persona.nombrePersona = '${req.body.nombre} ${req.body.apellido}',
+          SET persona.nombrePersona = '${req.body.apellido} ${req.body.nombre}',
           persona.cuilPersona = '${req.body.cuil}',
           persona.celPersona = '${req.body.celular}',
           persona.mailPersona = '${req.body.mail}',
+          persona.fechanacPersona = '${req.body.fnac}',
           persona.idUsuario = '${obj.insertId}'
           WHERE persona.idPersona = '${req.body.idPersona}'       
           `; 
@@ -359,9 +403,7 @@ app.get('/login/:username/:password',(req, res) => {
             let query3 = conn.query(sql3, (err3, results3) => {
               if(err3) throw err3; 
               rowArray3 = JSON.stringify(results3); 
-              objUsuarioactivo = JSON.parse(rowArray3);
-
-
+              objUsuarioactivo = JSON.parse(rowArray3);  
               if (objUsuarioactivo[0]) {
                 // Afiliado titular
                 let sql32 = `
@@ -405,7 +447,7 @@ app.get('/login/:username/:password',(req, res) => {
 
           }else{
             // No se encontro la persona 
-            res.send(JSON.stringify({"status": 200, "error": null, "response": ['Algo anduvo mal.']}));
+            res.send(JSON.stringify({"status": 200, "error": null, "response": ['Usuario no encontrado.']}));
           }
 
         });
@@ -414,7 +456,7 @@ app.get('/login/:username/:password',(req, res) => {
 
 
     }else{
-      res.send(JSON.stringify({"status": 200, "error": null, "response": ['Usuario no encontrado.']}));
+      res.send(JSON.stringify({"status": 200, "error": null, "response": ['Usuario no encontrado']}));
     }
  
  
@@ -453,3 +495,89 @@ app.get('/pdf417/:dni',(req, res) => {
 
    
 });
+
+
+
+// Validar afiliado ACTIVO (titular o gfamiliar)
+app.get('/afiliadoactivo/:username',(req, res) => {
+  
+  let sql = `SELECT id_usu FROM usuario WHERE nom_usu = '${req.params.username}'`;
+  let query = conn.query(sql, (err, results) => {
+    if(err) throw err;
+    rowArray = JSON.stringify(results); 
+    obj = JSON.parse(rowArray);     
+    // si encuentra al usuario...
+    if (obj[0]) {
+      
+      let sql2 = `SELECT documentoPersona, idPersona FROM persona WHERE idUsuario = '${obj[0].id_usu}'`;
+      let query = conn.query(sql2, (err2, results2) => {
+        if(err2) throw err2;
+        rowArray2 = JSON.stringify(results2); 
+        obj2 = JSON.parse(rowArray2);    
+        if (obj2[0]) {
+          
+          let sql3 = `SELECT nombrePersona FROM usuarioactivo WHERE documentoPersona = '${obj2[0].documentoPersona}'`;
+          let query = conn.query(sql3, (err3, results3) => {
+            if(err3) throw err3;
+            rowArray3 = JSON.stringify(results3); 
+            obj3 = JSON.parse(rowArray3);    
+            if (obj3[0]) {
+              // Activo
+              res.send(JSON.stringify({"status": 200, "error": null, "response": true })); 
+
+
+            } else {
+              // esta inactivo(titular), pero voy a chequear por le familiar 
+
+              let sql4 = `SELECT idPersonaA FROM afiliadoflia WHERE idPersona = '${obj2[0].idPersona}'`;
+              let query = conn.query(sql4, (err4, results4) => {
+                if(err4) throw err4;
+                rowArray4 = JSON.stringify(results4); 
+                obj4 = JSON.parse(rowArray4);  
+ 
+                if(obj4[0]){
+
+                  let sql5 = `SELECT nombrePersona FROM usuarioactivo WHERE idPersona = '${obj4[0].idPersonaA}'`;
+                  let query = conn.query(sql5, (err5, results5) => {
+                    if(err5) throw err5;
+                    rowArray5 = JSON.stringify(results5); 
+                    obj5= JSON.parse(rowArray5);  
+
+                    if (obj5[0]) {
+                      // Activo
+                      res.send(JSON.stringify({"status": 200, "error": null, "response": true })); 
+
+                    }else{
+                      // Has sido dado de baja (familiar) 
+                      res.send(JSON.stringify({"status": 200, "error": null, "response": false })); 
+
+                    }
+                  });
+
+
+                }else{
+                  // Has sido dado de baja (titular)
+                  res.send(JSON.stringify({"status": 200, "error": null, "response": false })); 
+                }
+
+              });
+
+            } 
+          });
+
+        }else{
+          res.send(JSON.stringify({"status": 200, "error": null, "response": 'Ha ocurrido un problema. Vuelva a intentarlo más tarde.' })); 
+        }
+      
+      });
+
+
+
+    }else{
+      res.send(JSON.stringify({"status": 200, "error": null, "response": 'Ha ocurrido un problema, vuelva a intentarlo más tarde.' })); 
+    }
+  });
+
+   
+});
+
